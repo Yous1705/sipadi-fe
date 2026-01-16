@@ -1,82 +1,143 @@
 import { apiFetch } from "@/lib/client";
-import { Submission } from "@/types/assignment";
 import {
+  ActiveAttendanceItem,
+  AttendanceHistoryItem,
   AttendanceSessionDetail,
-  MyClasses,
-  StudentAssignment,
+  ClassResponse,
+  MyClassItem,
   StudentAssignmentDetail,
-  StudentAttendance,
-  StudentClass,
-  StudentClassDetail,
+  Subject,
+  SubjectResponse,
 } from "@/types/student";
 
-export type StudentDashboardResponse = {
-  assignments: number;
-  attendanceSession: number;
-};
-
 export async function getStudentDashboard() {
-  return apiFetch<StudentDashboardResponse>(`/student/dashboard`, {
+  return apiFetch<{ assignments: number; attendanceSession: number }>(
+    "/student/dashboard",
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+}
+
+export async function getMyClasses() {
+  return apiFetch<MyClassItem[]>("/student/classes", {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
   });
 }
 
-export async function getMyClasses(): Promise<StudentClass[]> {
-  return apiFetch(`/student/my-classes`, {
+export async function getClass(classId: number) {
+  return apiFetch<ClassResponse>(`/student/classes/${classId}`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
   });
 }
 
-export async function getStudentAssignments() {
-  return apiFetch<StudentAssignment[]>(`/student/assignments`, {
+export async function getAssignmentDetail(assignmentId: number) {
+  return apiFetch<StudentAssignmentDetail>(
+    `/student/assignments/${assignmentId}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+}
+
+export async function submitAssignmentUrl(assignmentId: number, url: string) {
+  return apiFetch(`/student/assignments/${assignmentId}/submission/url`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ url }),
+  });
+}
+
+export async function submitAssignmentFile(assignmentId: number, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/student/assignments/${assignmentId}/submission/file`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: form,
+    }
+  );
+
+  if (!res.ok) {
+    let msg = "Gagal upload file";
+    try {
+      const j = await res.json();
+      msg = j?.message ?? j?.error ?? msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function getActiveAttendanceByClass(classId: number) {
+  return apiFetch<ActiveAttendanceItem[]>(
+    `/student/classes/${classId}/attendance/active`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+}
+
+export async function getAttendanceHistoryByClass(classId: number) {
+  return apiFetch<AttendanceHistoryItem[]>(
+    `/student/classes/${classId}/attendance/history`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+}
+
+export async function selfAttend(data: {
+  attendanceSessionId: number;
+  status: "HADIR" | "IZIN" | "SAKIT" | "ALPHA";
+  note?: string;
+}) {
+  return apiFetch(`/student/attendance`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMySubjects() {
+  return apiFetch<Subject[]>("/student/subjects", {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
   });
 }
 
-function getToken() {
-  const match = document.cookie.match(/sipadi_token=([^;]+)/);
-  return match?.[1];
-}
-
-export async function getStudentAssignmentDetail(id: number) {
-  return apiFetch<StudentAssignmentDetail>(`/student/assignments/${id}`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  });
-}
-
-// export async function submitAssignment(assignmentId: number, fileUrl: string) {
-//   return apiFetch<Submission>(
-//     `/student/assignments/${assignmentId}/submission`,
-//     {
-//       method: "POST",
-//       headers: {
-//         Authorization: `Bearer ${getToken()}`,
-//       },
-//       body: JSON.stringify({
-//         fileUrl,
-//       }),
-//     }
-//   );
-// }
-
-export async function getMyAttendance(): Promise<StudentAttendance[]> {
-  return apiFetch(`/student/attendances`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  });
-}
-
-export async function getStudentClassDetail(classId: number) {
-  return apiFetch<StudentClassDetail>(`/student/classes/${classId}`, {
+export async function getSubject(teachingAssigmentId: number) {
+  return apiFetch<SubjectResponse>(`/student/subjects/${teachingAssigmentId}`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
@@ -87,6 +148,7 @@ export async function getAttendanceSessionDetail(sessionId: number) {
   return apiFetch<AttendanceSessionDetail>(
     `/student/attendance/session/${sessionId}`,
     {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
@@ -94,49 +156,7 @@ export async function getAttendanceSessionDetail(sessionId: number) {
   );
 }
 
-export async function attendSession(
-  attendanceSessionId: number,
-  status: "HADIR" | "IZIN" | "SAKIT",
-  note?: string
-) {
-  return apiFetch(`/student/attendance`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify({
-      attendanceSessionId,
-      status,
-      note,
-    }),
-  });
-}
-
-export async function getAssignmentsByTeaching(id: number) {
-  return apiFetch<StudentAssignment[]>(`/student/teaching/${id}/assignments`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  });
-}
-
-export function getAssignmentDetail(assignmentId: number) {
-  return apiFetch<StudentAssignmentDetail>(
-    `/student/assignments/${assignmentId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    }
-  );
-}
-
-export function submitAssignment(assignmentId: number, fileUrl: string) {
-  return apiFetch(`/student/assignments/${assignmentId}/submission`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify({ fileUrl }),
-  });
+function getToken() {
+  const match = document.cookie.match(/sipadi_token=([^;]+)/);
+  return match?.[1];
 }

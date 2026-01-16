@@ -31,7 +31,7 @@ function middleware(req: NextRequest) {
 
   if (!isAllowed) {
     return NextResponse.redirect(
-      new URL(`/${payload.role.toLowerCase()}/dashboard`, req.url)
+      new URL(`/${payload.role.toLowerCase()}/`, req.url)
     );
   }
   return NextResponse.next();

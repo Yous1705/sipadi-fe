@@ -1,90 +1,70 @@
-export type StudentAssignment = {
+export type ClassResponse = {
+  classId: number;
+  subjects: Array<{
+    teachingAssignmentId: number;
+    subjectName: string;
+    teacherName: string;
+    assignments: Array<{
+      id: number;
+      title: string;
+      dueDate: string;
+      status: "SUBMITTED" | "NOT_SUBMITTED";
+      score: number | null;
+    }>;
+    attendanceSessions: Array<{
+      id: number;
+      name: string;
+      openAt: string;
+      closeAt: string | null;
+      isActive: boolean;
+      isAttended: boolean;
+    }>;
+  }>;
+};
+
+export type AssignmentDetail = {
   id: number;
   title: string;
+  description: string;
   dueDate: string;
-  teachingAssigment: {
-    subject: {
-      name: string;
-    };
-    teacher: {
-      name: string;
-    };
-  };
-  submissions: {
+  subjectName: string;
+  teacherName: string;
+  submission: null | {
     id: number;
+    fileUrl: string;
+    submittedAt: string;
     score: number | null;
-  }[];
+  };
 };
 
-// export type StudentAssignmentDetail = {
-//   id: number;
-//   title: string;
-//   description: string | null;
-//   dueDate: string;
-//   status: "PUBLISHED" | "DRAFT" | "CLOSED";
-
-//   teachingAssigment: {
-//     subject: {
-//       id: number;
-//       name: string;
-//     };
-//     teacher: {
-//       id: number;
-//       name: string;
-//     };
-//     class: {
-//       id: number;
-//       name: string;
-//     };
-//   };
-
-//   submissions: {
-//     id: number;
-//     score: number | null;
-//     feedback: string | null;
-//     submittedAt: string;
-//     fileUrl: string;
-//   }[];
-// };
-
-export type MyClasses = {
+export type ActiveAttendanceItem = {
   id: number;
   name: string;
-  email: string;
-  classId: number;
-  class: {
-    id: number;
-    name: string;
-    year: number;
-    isActive: boolean;
-    homeroomTeacherId: number;
-    teachingAssigment: {
-      id: number;
-      teacherId: number;
-      subjectId: number;
-      subject: {
-        name: string;
-      };
-      teacher: {
-        name: string;
-      };
-    }[];
+  openAt: string;
+  closeAt: string | null;
+  isActive: boolean;
+  subjectName: string;
+  teacherName: string;
+  isAttended: boolean;
+  status: "HADIR" | "IZIN" | "SAKIT" | "ALPHA" | null;
+};
+
+export type AttendanceHistoryItem = {
+  id: number;
+  name: string;
+  openAt: string;
+  closeAt: string | null;
+  isActive: boolean;
+  subjectName: string;
+  teacherName: string;
+  attendance: null | {
+    status: "HADIR" | "IZIN" | "SAKIT" | "ALPHA";
+    note: string | null;
+    attendedAt: string;
   };
 };
 
-export type StudentAttendance = {
-  subject: string;
-  teacher: string;
-  totalSession: number;
-  attendance: {
-    HADIR: number;
-    IZIN: number;
-    SAKIT: number;
-    ALPHA: number;
-  };
-};
-
-export type StudentClass = {
+export type MyClassItem = {
   classId: number;
   className: string;
   teachingAssignmentId: number;
@@ -92,55 +72,73 @@ export type StudentClass = {
   teacherName: string;
 };
 
-export type StudentClassDetail = {
+export type Subject = {
   classId: number;
-  subjects: {
-    teachingAssignmentId: number;
-    subjectName: string;
-    teacherName: string;
-
-    assignments: {
-      id: number;
-      title: string;
-      dueDate: string;
-      status: "SUBMITTED" | "NOT_SUBMITTED";
-      score: number | null;
-    }[];
-
-    attendanceSessions: {
-      id: number;
-      name?: string | null;
-      openAt: string;
-      closeAt: string;
-      isActive: boolean;
-      isAttended: boolean;
-    }[];
-  }[];
-};
-
-export type AttendanceSessionDetail = {
-  id: number;
-  name?: string | null;
-  openAt: string;
-  closeAt: string;
-  isActive: boolean;
-
+  teachingAssigmentId: number;
   subjectName: string;
   teacherName: string;
 };
 
-export interface StudentAssignmentDetail {
+export type SubjectResponse = {
+  classId: number;
+  teachingAssigmentId: number;
+  subjectName: string;
+  teacherName: string;
+
+  assignments: Array<{
+    id: number;
+    title: string;
+    dueDate: string;
+    status: "SUBMITTED" | "NOT_SUBMITTED";
+    score: number | null;
+  }>;
+
+  activeAttendanceSessions: Array<{
+    id: number;
+    name: string;
+    openAt: string;
+    closeAt: string | null;
+    isActive: boolean;
+    isAttended: boolean;
+  }>;
+};
+export type SubmissionPolicy = "URL_ONLY" | "FILE_ONLY" | "URL_OR_FILE";
+export type SubmissionKind = "URL" | "FILE";
+
+export type StudentAssignmentDetail = {
   id: number;
   title: string;
   description: string;
   dueDate: string;
+
+  submissionPolicy: SubmissionPolicy;
+  maxFileSizeMb: number;
+
   subjectName: string;
   teacherName: string;
 
-  submission: {
+  classId?: number;
+  teachingAssigmentId?: number;
+
+  submission: null | {
     id: number;
-    fileUrl: string;
+    kind: SubmissionKind;
+    url: string | null;
+    fileUrl: string | null;
     submittedAt: string;
     score: number | null;
-  } | null;
-}
+    feedback?: string | null;
+  };
+};
+
+export type AttendanceSessionDetail = {
+  id: number;
+  name: string | null;
+  openAt: string;
+  closeAt: string | null;
+  isActive: boolean;
+
+  classId: number;
+  subjectName: string;
+  teacherName: string;
+};
