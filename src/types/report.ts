@@ -44,3 +44,30 @@ export interface HomeroomClass {
     subjectName: string;
   }[];
 }
+
+export interface GradeReportAssignment {
+  id: number;
+  title: string;
+}
+
+export interface GradeReportStudentAssignment {
+  assignmentId: number;
+  title: string;
+  score: number;
+  submitted: boolean;
+}
+
+export interface GradeReportStudent {
+  studentId: number;
+  studentName: string;
+  className: string;
+  assignments: GradeReportStudentAssignment[];
+  average: number | null;
+}
+
+export interface GradeReportResponse {
+  teachingId: number;
+  className: string;
+  assignments: GradeReportAssignment[];
+  students: GradeReportStudent[];
+}

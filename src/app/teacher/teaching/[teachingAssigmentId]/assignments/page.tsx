@@ -1,113 +1,113 @@
 "use client";
-import AssignmentStatusAction from "@/components/assignment-status-actionn";
-import {
-  deleteAssignment,
-  getAssignmetsByTeaching,
-} from "@/services/teacher/teacher-teaching.service";
-import { Assignment } from "@/types/assignment";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { Assignment } from "@/types/teacher";
+import { getAssignmentsByTeaching } from "@/services/teacher/teacher.service";
+import TeacherNavbar from "@/components/teacher-navbar";
 
-function AssignmentPage() {
-  const param = useParams();
-  const teachingAssigmentId = Number(param.teachingAssigmentId);
+export default function TeacherAssignmentsPage() {
+  const params = useParams();
+  const teachingAssigmentId = Number(params.teachingAssigmentId);
 
-  const [assignment, setAssignment] = useState<Assignment[]>([]);
+  const [items, setItems] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getAssignmetsByTeaching(teachingAssigmentId)
-      .then(setAssignment)
-      .catch(() => setError("Gagal memuat tugas"))
+    if (!teachingAssigmentId) return;
+
+    setLoading(true);
+    setError(null);
+
+    getAssignmentsByTeaching(teachingAssigmentId)
+      .then(setItems)
+      .catch((e) => {
+        const msg = e?.message ?? e?.error ?? "Gagal memuat assignments";
+        setError(msg);
+      })
       .finally(() => setLoading(false));
-  });
+  }, [teachingAssigmentId]);
 
-  const handleDelete = async (id: number) => {
-    const ok = confirm("Yakin ingin menghapus assignment ini?");
-    if (!ok) return;
-
-    await deleteAssignment(id);
-    setAssignment((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
 
   if (error) {
-    return <div>{error}</div>;
-  }
-  return (
-    <div className="p-6 space-y-6">
-      <header className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-800">Assignments</h1>
+    return (
+      <div className="p-6 space-y-4">
+        <div className="border border-red-200 bg-red-50 text-red-700 rounded p-4">
+          {error}
+        </div>
         <Link
-          href={`/teacher/teaching/${teachingAssigmentId}/report`}
-          className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+          href={`/teacher/teaching/${teachingAssigmentId}`}
+          className="text-sm text-gray-600 hover:underline"
         >
-          Report
+          ← Kembali
         </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <TeacherNavbar />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">Assignments</h1>
+          <p className="text-sm text-gray-500">
+            Teaching ID: {teachingAssigmentId}
+          </p>
+        </div>
+
         <Link
           href={`/teacher/teaching/${teachingAssigmentId}/assignments/create`}
-          className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+          className="border rounded px-3 py-2 text-sm hover:bg-gray-50"
         >
-          + Tambah
+          + Create
         </Link>
-      </header>
+      </div>
 
-      {assignment.length === 0 && <EmptyState />}
-
-      <div className="space-y-3">
-        {assignment.map((a) => (
-          <div
-            key={a.id}
-            className="relative flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm hover:shadow transition"
-          >
+      {!items.length ? (
+        <div className="border rounded p-6 text-gray-600">
+          Belum ada tugas untuk teaching ini.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((a) => (
             <Link
-              href={`/teacher/assignments/${a.id}`}
-              className="flex-1 space-y-1"
+              key={a.id}
+              href={`/teacher/teaching/${teachingAssigmentId}/assignments/${a.id}`}
+              className="block border rounded-lg p-4 hover:bg-gray-50 transition"
             >
-              <p className="font-medium text-gray-900">{a.title}</p>
-              <p className="text-sm text-gray-500">
-                Due {new Date(a.dueDate).toLocaleDateString()}
-              </p>
-            </Link>
+              <div className="flex justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">{a.title}</div>
+                  <div className="text-sm text-gray-600">
+                    Due: {new Date(a.dueDate).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Policy: {a.submissionPolicy} • Max: {a.maxFileSizeMb}MB
+                    {a.allowedMime ? ` • Mime: ${a.allowedMime}` : ""}
+                  </div>
+                </div>
 
-            <div className="relative">
-              <AssignmentStatusAction
-                assignmentId={a.id}
-                status={a.status}
-                onUpdated={() =>
-                  getAssignmetsByTeaching(teachingAssigmentId).then(
-                    setAssignment
-                  )
-                }
-              />
-            </div>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete(a.id);
-              }}
-              className="ml-4 text-sm text-red-600 hover:underline"
-            >
-              Hapus
-            </button>
-          </div>
-        ))}
+                <div className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 h-fit">
+                  {a.status}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <Link
+          href={`/teacher/teaching/${teachingAssigmentId}`}
+          className="text-sm text-gray-600 hover:underline"
+        >
+          ← Kembali ke Teaching
+        </Link>
       </div>
     </div>
   );
 }
-
-function EmptyState() {
-  return (
-    <div className="border rounded p-8 text-center text-gray-500">
-      Belum ada assignment untuk kelas ini
-    </div>
-  );
-}
-
-export default AssignmentPage;
