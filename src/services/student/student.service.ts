@@ -6,20 +6,18 @@ import {
   ClassResponse,
   MyClassItem,
   StudentAssignmentDetail,
+  StudentDashboardResponse,
   Subject,
   SubjectResponse,
 } from "@/types/student";
 
 export async function getStudentDashboard() {
-  return apiFetch<{ assignments: number; attendanceSession: number }>(
-    "/student/dashboard",
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    }
-  );
+  return apiFetch<StudentDashboardResponse>("/student/dashboard", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 }
 
 export async function getMyClasses() {
@@ -48,7 +46,7 @@ export async function getAssignmentDetail(assignmentId: number) {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
-    }
+    },
   );
 }
 
@@ -74,7 +72,7 @@ export async function submitAssignmentFile(assignmentId: number, file: File) {
         Authorization: `Bearer ${getToken()}`,
       },
       body: form,
-    }
+    },
   );
 
   if (!res.ok) {
@@ -96,7 +94,7 @@ export async function getActiveAttendanceByClass(classId: number) {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
-    }
+    },
   );
 }
 
@@ -108,7 +106,7 @@ export async function getAttendanceHistoryByClass(classId: number) {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
-    }
+    },
   );
 }
 
@@ -152,7 +150,21 @@ export async function getAttendanceSessionDetail(sessionId: number) {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
-    }
+    },
+  );
+}
+
+import type { AssignmentHistoryItem } from "@/types/student";
+
+export async function getAssignmentHistoryByClass(classId: number) {
+  return apiFetch<AssignmentHistoryItem[]>(
+    `/student/classes/${classId}/assignments/history`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    },
   );
 }
 

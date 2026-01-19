@@ -13,13 +13,17 @@ import {
   publishAssignment,
   resetGrade,
 } from "@/services/teacher/teacher.service";
-import { toFileUrl } from "@/lib/fileUrl";
-import TeacherNavbar from "@/components/teacher-navbar";
 
-type EditGradeState = Record<
-  number,
-  { score: string; feedback: string; loading: boolean; error: string | null }
->;
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  GradeState,
+  SubmissionCard,
+} from "@/features/teacher/assignment/submission-card";
+import { AssignmentStatus } from "@/features/teacher/assignment/status";
+
+type EditGradeState = Record<number, GradeState>;
 
 function pickErr(e: any) {
   return e?.message ?? e?.error ?? "Terjadi kesalahan";
@@ -32,7 +36,6 @@ export default function TeacherAssignmentDetailPage() {
 
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +56,7 @@ export default function TeacherAssignmentDetailPage() {
       .then(([a, subs]) => {
         setAssignment(a);
         setSubmissions(subs);
+
         const init: EditGradeState = {};
         subs.forEach((s) => {
           init[s.id] = {
@@ -74,15 +78,11 @@ export default function TeacherAssignmentDetailPage() {
     setGradeState((prev) => {
       const next: EditGradeState = { ...prev };
       subs.forEach((s) => {
-        if (!next[s.id]) {
-          next[s.id] = { score: "", feedback: "", loading: false, error: null };
-        }
         next[s.id] = {
-          ...next[s.id],
           score: s.score?.toString() ?? "",
           feedback: s.feedback ?? "",
-          error: null,
           loading: false,
+          error: null,
         };
       });
       return next;
@@ -182,20 +182,32 @@ export default function TeacherAssignmentDetailPage() {
   }
 
   if (!teachingAssigmentId || !assignmentId) {
-    return <div className="p-6">Invalid params</div>;
+    return (
+      <Card
+        title="Invalid params"
+        description="teachingAssigmentId / assignmentId tidak valid."
+      >
+        <Link
+          href={`/teacher/teaching/${teachingAssigmentId || ""}/assignments`}
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Back
+        </Link>
+      </Card>
+    );
   }
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="text-sm text-slate-500">Loading...</div>;
 
   if (error) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="border border-red-200 bg-red-50 text-red-700 rounded p-4">
+      <div className="space-y-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
           {error}
         </div>
         <Link
           href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
-          className="text-sm text-gray-600 hover:underline"
+          className="text-sm text-slate-600 hover:underline"
         >
           ← Back
         </Link>
@@ -205,78 +217,58 @@ export default function TeacherAssignmentDetailPage() {
 
   if (!assignment) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="border rounded p-6 text-gray-600">
-          Assignment tidak ditemukan.
-        </div>
+      <Card title="Not found" description="Assignment tidak ditemukan.">
         <Link
           href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
-          className="text-sm text-gray-600 hover:underline"
+          className="text-sm text-slate-600 hover:underline"
         >
           ← Back
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <TeacherNavbar />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold truncate">{title}</h1>
-          <div className="text-sm text-gray-600">
-            Due: {new Date(assignment.dueDate).toLocaleString()}
+    <div className="space-y-4">
+      <PageHeader
+        title={title}
+        subtitle={`Due: ${new Date(assignment.dueDate).toLocaleString()}`}
+        right={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="primary" onClick={onPublish}>
+              Publish
+            </Button>
+            <Button onClick={onClose}>Close</Button>
+            <Button variant="danger" onClick={onDelete}>
+              Delete
+            </Button>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Status: {assignment.status} • Policy: {assignment.submissionPolicy}{" "}
-            • Max: {assignment.maxFileSizeMb}MB{" "}
-            {assignment.allowedMime ? `• Mime: ${assignment.allowedMime}` : ""}
-          </div>
-        </div>
+        }
+      />
 
-        <div className="flex gap-2">
-          <button
-            onClick={onPublish}
-            className="border rounded px-3 py-2 text-sm hover:bg-gray-50"
-          >
-            Publish
-          </button>
-          <button
-            onClick={onClose}
-            className="border rounded px-3 py-2 text-sm hover:bg-gray-50"
-          >
-            Close
-          </button>
-          <button
-            onClick={onDelete}
-            className="border rounded px-3 py-2 text-sm hover:bg-gray-50"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      <div className="border rounded-lg p-4 space-y-2">
-        <div className="font-semibold">Description</div>
-        <div className="text-sm text-gray-700 whitespace-pre-wrap">
+      <Card
+        title="Overview"
+        description={`Policy: ${assignment.submissionPolicy} • Max: ${assignment.maxFileSizeMb}MB${
+          assignment.allowedMime ? ` • Mime: ${assignment.allowedMime}` : ""
+        }`}
+        action={<AssignmentStatus value={String(assignment.status)} />}
+      >
+        <div className="text-sm text-slate-700 whitespace-pre-wrap">
           {assignment.description ?? "-"}
         </div>
-      </div>
+      </Card>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="font-semibold">Submissions</div>
-          <button
-            onClick={refreshSubmissions}
-            className="border rounded px-3 py-2 text-sm hover:bg-gray-50"
-          >
-            Refresh
-          </button>
-        </div>
-
+      <Card
+        title="Submissions"
+        description={
+          !submissions.length
+            ? "No submissions yet"
+            : `${submissions.length} submission(s)`
+        }
+        action={<Button onClick={refreshSubmissions}>Refresh</Button>}
+      >
         {!submissions.length ? (
-          <div className="border rounded p-6 text-gray-600">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
             Belum ada submission.
           </div>
         ) : (
@@ -289,71 +281,34 @@ export default function TeacherAssignmentDetailPage() {
                 error: null,
               };
 
-              const fileHref = toFileUrl(s.fileUrl);
-
               return (
-                <div key={s.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate">
-                        {s.student?.name ?? `Student #${s.studentId}`}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Submitted: {new Date(s.createdAt).toLocaleString()}
-                      </div>
-
-                      <div className="text-sm mt-2 space-y-1">
-                        {s.url ? (
-                          <div>
-                            URL:{" "}
-                            <a
-                              href={s.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-600 hover:underline break-all"
-                            >
-                              {s.url}
-                            </a>
-                          </div>
-                        ) : null}
-
-                        {fileHref ? (
-                          <div>
-                            File:{" "}
-                            <a
-                              href={fileHref}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-600 hover:underline break-all"
-                            >
-                              Download file
-                            </a>
-                          </div>
-                        ) : null}
-
-                        {!s.url && !s.fileUrl ? <div>-</div> : null}
-                      </div>
-                    </div>
-
-                    <div className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 h-fit">
-                      Score: {s.score ?? "-"}
-                    </div>
-                  </div>
-                </div>
+                <SubmissionCard
+                  key={s.id}
+                  s={s}
+                  state={st}
+                  onChange={(patch) =>
+                    setGradeState((p) => ({
+                      ...p,
+                      [s.id]: { ...p[s.id], ...patch },
+                    }))
+                  }
+                  onSave={() => onGrade(s.id)}
+                  onReset={() => onReset(s.id)}
+                />
               );
             })}
           </div>
         )}
-      </div>
 
-      <div>
-        <Link
-          href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
-          className="text-sm text-gray-600 hover:underline"
-        >
-          ← Back to Assignments
-        </Link>
-      </div>
+        <div className="pt-3">
+          <Link
+            href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
+            className="text-sm text-slate-600 hover:underline"
+          >
+            ← Back to Assignments
+          </Link>
+        </div>
+      </Card>
     </div>
   );
 }

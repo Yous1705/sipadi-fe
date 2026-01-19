@@ -142,3 +142,44 @@ export type AttendanceSessionDetail = {
   subjectName: string;
   teacherName: string;
 };
+
+export type StudentDashboardAssignment = {
+  id: number;
+  title: string;
+  dueDate: string;
+  subjectName: string;
+  teacherName: string;
+  teachingAssigmentId: number;
+};
+
+export type StudentDashboardAttendance = {
+  id: number;
+  name: string | null;
+  openAt: string;
+  closeAt: string | null;
+  subjectName: string;
+  teacherName: string;
+  teachingAssigmentId: number;
+};
+
+export type StudentDashboardResponse = {
+  pendingAssignmentsCount: number;
+  pendingAssignments: StudentDashboardAssignment[];
+
+  pendingAttendancesCount: number;
+  pendingAttendances: StudentDashboardAttendance[];
+};
+
+export type AssignmentHistoryItem = {
+  id: number;
+  title: string;
+  dueDate: string;
+  assignmentStatus?: string | null;
+
+  teachingAssigmentId: number;
+  subjectName: string;
+  teacherName: string;
+
+  status: "SUBMITTED" | "NOT_SUBMITTED";
+  score?: number | null;
+};

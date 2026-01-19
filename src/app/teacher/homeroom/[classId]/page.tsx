@@ -8,7 +8,11 @@ import {
   exportClassReport,
   getClassReport,
 } from "@/services/teacher/teacher.service";
-import TeacherNavbar from "@/components/teacher-navbar";
+
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ReportTable } from "@/features/teacher/report/report-table";
 
 function pickErr(e: any) {
   const msg = e?.message ?? e?.error ?? "Terjadi kesalahan";
@@ -61,23 +65,25 @@ export default function HomeroomReportPage() {
   const students = useMemo(() => data?.students ?? [], [data]);
 
   const sortedStudents = useMemo(() => {
-    return [...students].sort((a, b) => {
-      const ar = a.rank ?? 999999;
-      const br = b.rank ?? 999999;
-      return ar - br;
-    });
+    return [...students].sort(
+      (a, b) => (a.rank ?? 999999) - (b.rank ?? 999999),
+    );
   }, [students]);
 
-  if (!classId) return <div className="p-6">Invalid classId</div>;
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (!classId)
+    return <div className="text-sm text-slate-500">Invalid classId</div>;
+  if (loading) return <div className="text-sm text-slate-500">Loading...</div>;
 
   if (error) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="border border-red-200 bg-red-50 text-red-700 rounded p-4">
+      <div className="space-y-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
           {error}
         </div>
-        <Link href="/teacher" className="text-sm text-gray-600 hover:underline">
+        <Link
+          href="/teacher"
+          className="text-sm text-slate-600 hover:underline"
+        >
           ← Back
         </Link>
       </div>
@@ -86,56 +92,64 @@ export default function HomeroomReportPage() {
 
   if (!data) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="border rounded p-6 text-gray-600">
-          Report tidak ditemukan.
-        </div>
-        <Link href="/teacher" className="text-sm text-gray-600 hover:underline">
+      <Card title="Not found" description="Report tidak ditemukan.">
+        <Link
+          href="/teacher"
+          className="text-sm text-slate-600 hover:underline"
+        >
           ← Back
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <TeacherNavbar />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Homeroom Summary Report</h1>
-          <p className="text-sm text-gray-500">
-            {data.className} (ID: {data.classId})
-          </p>
-        </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Homeroom Summary Report"
+        subtitle={`${data.className} (ID: ${data.classId})`}
+        right={
+          <Link href="/teacher">
+            <Button>Back</Button>
+          </Link>
+        }
+      />
 
-        <Link href="/teacher" className="text-sm text-gray-600 hover:underline">
-          ← Back
-        </Link>
-      </div>
+      <Card
+        title="Export"
+        description="Download rekap dalam format CSV/XLSX."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              onClick={() => onExport("xlsx")}
+              disabled={!!exporting}
+            >
+              {exporting === "xlsx" ? "Exporting..." : "Export XLSX"}
+            </Button>
+            <Button onClick={() => onExport("csv")} disabled={!!exporting}>
+              {exporting === "csv" ? "Exporting..." : "Export CSV"}
+            </Button>
+          </div>
+        }
+      >
+        {!!data.subjects?.length ? (
+          <div className="text-sm text-slate-600">
+            <span className="text-slate-500">Subjects: </span>
+            {data.subjects.map((s) => s.name).join(", ")}
+          </div>
+        ) : (
+          <div className="text-sm text-slate-500">No subjects.</div>
+        )}
+      </Card>
 
-      {/* Export */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onExport("xlsx")}
-          disabled={!!exporting}
-          className="border rounded px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-        >
-          {exporting === "xlsx" ? "Exporting..." : "Export XLSX"}
-        </button>
-        <button
-          onClick={() => onExport("csv")}
-          disabled={!!exporting}
-          className="border rounded px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-        >
-          {exporting === "csv" ? "Exporting..." : "Export CSV"}
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-auto">
+      <Card
+        title="Class report"
+        description="Ringkasan nilai & kehadiran siswa."
+      >
+        <ReportTable footer={`Rows: ${sortedStudents.length}`}>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-700">
+            <thead className="sticky top-0 bg-slate-50 text-slate-700">
               <tr>
                 <th className="text-left font-semibold px-3 py-2 border-b">
                   Nama
@@ -173,8 +187,7 @@ export default function HomeroomReportPage() {
                 </th>
               </tr>
 
-              {/* Class average row */}
-              <tr className="bg-white text-gray-600">
+              <tr className="bg-white text-slate-600">
                 <th className="text-left font-semibold px-3 py-2 border-b">
                   Rata-rata kelas
                 </th>
@@ -197,7 +210,10 @@ export default function HomeroomReportPage() {
 
             <tbody>
               {sortedStudents.map((st) => (
-                <tr key={st.studentId} className="odd:bg-white even:bg-gray-50">
+                <tr
+                  key={st.studentId}
+                  className="odd:bg-white even:bg-slate-50"
+                >
                   <td className="px-3 py-2 border-b">{st.name}</td>
                   <td className="px-3 py-2 border-b">{data.className}</td>
 
@@ -212,7 +228,6 @@ export default function HomeroomReportPage() {
                     {st.overallAverage ?? "-"}
                   </td>
                   <td className="px-3 py-2 border-b">{st.rank ?? "-"}</td>
-
                   <td className="px-3 py-2 border-b">{st.attendance.HADIR}</td>
                   <td className="px-3 py-2 border-b">{st.attendance.IZIN}</td>
                   <td className="px-3 py-2 border-b">{st.attendance.SAKIT}</td>
@@ -223,7 +238,7 @@ export default function HomeroomReportPage() {
               {!sortedStudents.length ? (
                 <tr>
                   <td
-                    className="px-3 py-6 text-gray-600"
+                    className="px-3 py-6 text-slate-600"
                     colSpan={2 + subjects.length + 6}
                   >
                     Tidak ada data siswa.
@@ -232,12 +247,8 @@ export default function HomeroomReportPage() {
               ) : null}
             </tbody>
           </table>
-        </div>
-
-        <div className="p-3 text-xs text-gray-500">
-          Rows: {sortedStudents.length}
-        </div>
-      </div>
+        </ReportTable>
+      </Card>
     </div>
   );
 }

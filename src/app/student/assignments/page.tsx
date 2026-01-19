@@ -1,138 +1,164 @@
 "use client";
 
-import StudentNavbar from "@/components/student-navbar";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
-import { getMySubjects, getSubject } from "@/services/student/student.service";
 
-type Filter = "ALL" | "NOT_SUBMITTED" | "SUBMITTED";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-function AllAssignmentsPage() {
+import type { AssignmentHistoryItem } from "@/types/student";
+import {
+  getAssignmentHistoryByClass,
+  getMySubjects,
+  getSubject,
+} from "@/services/student/student.service";
+
+import { Status } from "@/features/student/status";
+import {
+  AssignmentFilters,
+  Filter,
+} from "@/features/student/assignment-filter";
+
+function pickErr(e: any) {
+  return e?.message ?? e?.error ?? "Gagal memuat assignments";
+}
+
+export default function AllAssignmentsPage() {
   const [filter, setFilter] = useState<Filter>("ALL");
+  const [q, setQ] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<AssignmentHistoryItem[]>([]);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
 
     (async () => {
-      const subjects = await getMySubjects(); // [{teachingAssigmentId, subjectName, teacherName, ...}]
-      const hubs = await Promise.all(
-        subjects.map((s: any) => getSubject(s.teachingAssigmentId))
-      );
+      // Ambil classId dari salah satu subject hub (student cuma 1 kelas)
+      const subjects = await getMySubjects();
+      if (!subjects.length) {
+        setItems([]);
+        return;
+      }
+      const hub = await getSubject(subjects[0].teachingAssigmentId);
+      const classId = Number(hub.classId);
+      if (!classId) {
+        setItems([]);
+        return;
+      }
 
-      const flat = hubs.flatMap((hub: any) =>
-        hub.assignments.map((a: any) => ({
-          ...a,
-          teachingAssigmentId: hub.teachingAssigmentId,
-          subjectName: hub.subjectName,
-          teacherName: hub.teacherName,
-          classId: hub.classId,
-        }))
-      );
-
-      setItems(flat);
+      const rows = await getAssignmentHistoryByClass(classId);
+      setItems(rows);
     })()
-      .catch((e: any) =>
-        setError(e?.message ?? e?.error ?? "Gagal memuat assignments")
-      )
+      .catch((e: any) => setError(pickErr(e)))
       .finally(() => setLoading(false));
   }, []);
 
   const assignments = useMemo(() => {
-    const filtered =
+    const qq = q.trim().toLowerCase();
+
+    const byFilter =
       filter === "ALL" ? items : items.filter((x) => x.status === filter);
 
-    return filtered.sort(
-      (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    const byQuery = !qq
+      ? byFilter
+      : byFilter.filter((x) => x.title.toLowerCase().includes(qq));
+
+    // sort: dueDate desc (history enak terbaru dulu) — kalau kamu mau asc tinggal balik
+    return [...byQuery].sort(
+      (a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime(),
     );
-  }, [items, filter]);
+  }, [items, filter, q]);
 
   return (
-    <div>
-      <StudentNavbar />
-      <div className="max-w-6xl mx-auto p-6 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">All Assignments</h1>
-            <p className="text-sm text-gray-600">
-              Semua tugas dari seluruh subject
-            </p>
-          </div>
-          <Link className="text-sm underline" href="/student">
-            Back to Dashboard
+    <div className="space-y-4">
+      <PageHeader
+        title="All Assignments"
+        subtitle="All tasks (current + history)."
+        right={
+          <Link href="/student/dashboard">
+            <Button>Back</Button>
           </Link>
+        }
+      />
+
+      {loading ? (
+        <div className="text-sm text-slate-500">Loading...</div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
+          {error}
         </div>
+      ) : (
+        <Card title="Assignments" description={`${assignments.length} item(s)`}>
+          <div className="space-y-4">
+            <AssignmentFilters
+              filter={filter}
+              onFilter={setFilter}
+              q={q}
+              onQ={setQ}
+            />
 
-        <div className="flex gap-2">
-          {(["ALL", "NOT_SUBMITTED", "SUBMITTED"] as Filter[]).map((k) => (
-            <button
-              key={k}
-              onClick={() => setFilter(k)}
-              className={`px-3 py-2 rounded-lg border text-sm ${
-                filter === k ? "bg-black text-white" : ""
-              }`}
-            >
-              {k === "ALL"
-                ? "All"
-                : k === "NOT_SUBMITTED"
-                ? "Not submitted"
-                : "Submitted"}
-            </button>
-          ))}
-        </div>
+            {assignments.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
+                Belum ada assignment.
+              </div>
+            ) : (
+              <div className="divide-y rounded-xl border border-slate-200 bg-white">
+                {assignments.map((a) => {
+                  const late = new Date(a.dueDate) < new Date();
+                  const closed =
+                    String(a.assignmentStatus ?? "").toUpperCase() === "CLOSED";
+                  const submitted = a.status === "SUBMITTED";
 
-        {loading ? (
-          <div>Loading...</div>
-        ) : error ? (
-          <div className="border rounded-xl p-4 text-red-600">{error}</div>
-        ) : assignments.length === 0 ? (
-          <div className="border rounded-xl p-4">Belum ada assignment.</div>
-        ) : (
-          <div className="border rounded-xl divide-y">
-            {assignments.map((a) => {
-              const late = new Date(a.dueDate) < new Date();
-              return (
-                <div
-                  key={a.id}
-                  className="p-4 flex items-start justify-between gap-4"
-                >
-                  <div>
-                    <div className="font-medium">{a.title}</div>
-                    <div className="text-sm text-gray-600">
-                      {a.subjectName} • {a.teacherName}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Due: {new Date(a.dueDate).toLocaleString()}{" "}
-                      {late ? "• Late" : ""}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-sm">
-                      {a.status === "SUBMITTED" ? "Submitted" : "Not submitted"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Score: {a.score ?? "-"}
-                    </div>
-
+                  return (
                     <Link
-                      className="inline-block mt-2 text-sm underline"
+                      key={a.id}
                       href={`/student/assignments/${a.id}`}
+                      className="block p-4 hover:bg-slate-50 transition"
                     >
-                      Open
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900 truncate">
+                            {a.title}
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {a.subjectName} • {a.teacherName}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            Due: {new Date(a.dueDate).toLocaleString()}
+                          </div>
+
+                          <div className="mt-2 flex gap-2 flex-wrap">
+                            {submitted ? (
+                              <Status tone="green">Submitted</Status>
+                            ) : (
+                              <Status tone="amber">Not submitted</Status>
+                            )}
+                            {late ? <Status tone="rose">Late</Status> : null}
+                            {closed ? (
+                              <Status tone="gray">Closed</Status>
+                            ) : null}
+                            <Status tone="blue">Score: {a.score ?? "-"}</Status>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          <Button variant={submitted ? "outline" : "primary"}>
+                            {submitted ? "View" : "Open"}
+                          </Button>
+                        </div>
+                      </div>
                     </Link>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </Card>
+      )}
     </div>
   );
 }
-export default AllAssignmentsPage;

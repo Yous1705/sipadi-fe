@@ -1,15 +1,11 @@
-import AdminNavbar from "@/components/admin-navbar";
 import React from "react";
+import { AppShell } from "@/components/layout/app-shell";
+import AdminNavbar from "@/components/layout/admin-navbar";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen">
-      <AdminNavbar />
-      <main className="p-6 max-w-6xl mx-auto">{children}</main>
-    </div>
-  );
+  return <AppShell navbar={<AdminNavbar />}>{children}</AppShell>;
 }

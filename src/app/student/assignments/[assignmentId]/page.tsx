@@ -1,273 +1,156 @@
 "use client";
 
-import StudentNavbar from "@/components/student-navbar";
-import {
-  getAssignmentDetail,
-  submitAssignmentFile,
-  submitAssignmentUrl,
-} from "@/services/student/student.service";
-import { StudentAssignmentDetail, SubmissionPolicy } from "@/types/student";
 import Link from "next/link";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-function StudentAssignmentDetailPage() {
+import { getAssignmentDetail } from "@/services/student/student.service";
+import type { StudentAssignmentDetail } from "@/types/student";
+
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Status } from "@/features/student/status";
+import { SubmissionInfo } from "@/features/student/submission-info";
+import { SubmissionForm } from "@/features/student/submission-form";
+
+function pickErr(e: any) {
+  return e?.message ?? e?.error ?? "Gagal memuat assignment";
+}
+
+export default function StudentAssignmentDetailPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const aid = Number(assignmentId);
-
-  const classIdQ = searchParams.get("classId");
-  const backClassId = classIdQ ? Number(classIdQ) : null;
+  const id = Number(assignmentId);
 
   const [data, setData] = useState<StudentAssignmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [mode, setMode] = useState<"URL" | "FILE">("URL");
-  const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  const backHref = useMemo(() => {
-    if (data?.teachingAssigmentId)
-      return `/student/subjects/${data.teachingAssigmentId}`;
-    const cid = data?.classId ?? backClassId;
-    if (cid) return `/student/classes/${cid}`;
-    return "/student";
-  }, [data, backClassId]);
-
-  useEffect(() => {
-    if (!aid) return;
-
+  async function load() {
+    if (!id) return;
     setLoading(true);
     setError(null);
-
-    getAssignmentDetail(aid)
-      .then((d: any) => {
-        setData(d);
-        setSuccess(null);
-        const p: SubmissionPolicy = d.submissionPolicy;
-        if (p === "FILE_ONLY") setMode("FILE");
-        else setMode("URL");
-      })
-      .catch((e: any) =>
-        setError(e?.message ?? e?.error ?? "Gagal memuat assignment")
-      )
-      .finally(() => setLoading(false));
-  }, [aid]);
-
-  const isLate = data ? new Date(data.dueDate) < new Date() : false;
-  const policy: SubmissionPolicy | null = data?.submissionPolicy ?? null;
-  const maxMb = data?.maxFileSizeMb ?? 2;
-
-  async function onSubmit() {
-    if (!data) return;
-    setError(null);
-    setSuccess(null);
-
-    if (isLate) {
-      setError("Deadline sudah lewat");
-      return;
-    }
-
     try {
-      setSubmitting(true);
-
-      const useUrl =
-        policy === "URL_ONLY" || (policy === "URL_OR_FILE" && mode === "URL");
-
-      if (useUrl) {
-        if (!url.trim()) {
-          setError("URL wajib diisi");
-          return;
-        }
-        await submitAssignmentUrl(aid, url.trim());
-      } else {
-        if (!file) {
-          setError("File wajib dipilih");
-          return;
-        }
-        if (file.size > maxMb * 1024 * 1024) {
-          setError(`Ukuran file melebihi ${maxMb}MB`);
-          return;
-        }
-        await submitAssignmentFile(aid, file);
-      }
-
-      const fresh = await getAssignmentDetail(aid);
-      setData(fresh);
-      setUrl("");
-      setFile(null);
-      setSuccess("Berhasil submit");
-      router.refresh();
-    } catch (e: any) {
-      setError(e?.message ?? "Gagal submit assignment");
+      const d = await getAssignmentDetail(id);
+      setData(d);
+    } catch (e) {
+      setError(pickErr(e));
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   }
 
-  if (loading) {
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const dueLabel = useMemo(
+    () => (data ? new Date(data.dueDate).toLocaleString() : "-"),
+    [data],
+  );
+  const late = useMemo(
+    () => (data ? Date.now() > new Date(data.dueDate).getTime() : false),
+    [data],
+  );
+
+  if (!id) {
     return (
-      <div>
-        <StudentNavbar />
-        <div className="max-w-3xl mx-auto p-6">Loading...</div>
+      <Card title="Invalid params" description="assignmentId tidak valid.">
+        <Link
+          href="/student/assignments"
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Back
+        </Link>
+      </Card>
+    );
+  }
+
+  if (loading) return <div className="text-sm text-slate-500">Loading...</div>;
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
+          {error}
+        </div>
+        <Link
+          href="/student/assignments"
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Back
+        </Link>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div>
-        <StudentNavbar />
-        <div className="max-w-3xl mx-auto p-6">Assignment not found</div>
-      </div>
+      <Card title="Not found" description="Assignment tidak ditemukan.">
+        <Link
+          href="/student/assignments"
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Back
+        </Link>
+      </Card>
     );
   }
 
+  const backHref = data.teachingAssigmentId
+    ? `/student/subjects/${data.teachingAssigmentId}`
+    : "/student/assignments";
+
   return (
-    <div>
-      <StudentNavbar />
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">{data.title}</h1>
-            <p className="text-gray-600">
-              {data.subjectName} • {data.teacherName}
-            </p>
-            <p className="text-sm mt-1">
-              Due: {new Date(data.dueDate).toLocaleString()}
-            </p>
-            {isLate && (
-              <p className="text-red-600 text-sm mt-1">Deadline sudah lewat</p>
-            )}
-          </div>
-
-          <Link href={backHref} className="text-sm underline">
-            Back
+    <div className="space-y-4">
+      <PageHeader
+        title={data.title}
+        subtitle={`${data.subjectName} • ${data.teacherName}`}
+        right={
+          <Link href={backHref}>
+            <Button>Back</Button>
           </Link>
-        </div>
+        }
+      />
 
-        <div className="border rounded-xl p-4">
-          <div className="font-semibold mb-2">Description</div>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-            {data.description}
-          </p>
+      <Card
+        title="Assignment info"
+        description={`Due: ${dueLabel}`}
+        action={
+          <div className="flex gap-2 flex-wrap justify-end">
+            <Status tone={late ? "rose" : "green"}>
+              {late ? "Late" : "On time"}
+            </Status>
+            <Status tone="gray">{data.submissionPolicy}</Status>
+          </div>
+        }
+      >
+        <div className="text-sm text-slate-700 whitespace-pre-wrap">
+          {data.description || "-"}
         </div>
+      </Card>
 
-        {data.submission ? (
-          <div className="border rounded-xl p-4 space-y-2">
-            <div className="font-semibold text-green-700">
-              Sudah dikumpulkan
+      <Card
+        title="Submission"
+        description="Upload file atau kirim URL sesuai policy."
+      >
+        <div className="space-y-4">
+          <SubmissionInfo data={data} />
+
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="font-semibold text-slate-900 mb-2">
+              Submit / Update
             </div>
-            <p className="text-sm">
-              Submitted at:{" "}
-              {new Date(data.submission.submittedAt).toLocaleString()}
-            </p>
-
-            {data.submission.kind === "URL" && data.submission.url && (
-              <a
-                className="text-sm underline"
-                target="_blank"
-                href={data.submission.url}
-              >
-                Lihat URL
-              </a>
-            )}
-
-            {data.submission.kind === "FILE" && data.submission.fileUrl && (
-              <a
-                className="text-sm underline"
-                target="_blank"
-                href={data.submission.fileUrl}
-              >
-                Download/Lihat File
-              </a>
-            )}
-
-            <p className="text-sm">
-              Score:{" "}
-              <span className="font-semibold">
-                {data.submission.score ?? "-"}
-              </span>
-            </p>
-            {data.submission.feedback && (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                Feedback: {data.submission.feedback}
-              </p>
-            )}
-
-            {!isLate && (
-              <div className="pt-2 text-xs text-gray-500">
-                Kamu masih bisa resubmit sebelum dueDate.
-              </div>
-            )}
+            <SubmissionForm
+              data={data}
+              onSubmitted={async () => {
+                await load();
+              }}
+            />
           </div>
-        ) : (
-          <div className="border rounded-xl p-4 space-y-3">
-            <div className="font-semibold">Submit Assignment</div>
-
-            {policy === "URL_OR_FILE" && (
-              <div className="flex gap-2">
-                <button
-                  className={`px-3 py-2 border rounded-lg text-sm ${
-                    mode === "URL" ? "bg-black text-white" : ""
-                  }`}
-                  onClick={() => setMode("URL")}
-                >
-                  Submit URL
-                </button>
-                <button
-                  className={`px-3 py-2 border rounded-lg text-sm ${
-                    mode === "FILE" ? "bg-black text-white" : ""
-                  }`}
-                  onClick={() => setMode("FILE")}
-                >
-                  Upload File
-                </button>
-              </div>
-            )}
-
-            {(policy === "URL_ONLY" ||
-              (policy === "URL_OR_FILE" && mode === "URL")) && (
-              <input
-                type="text"
-                placeholder="Paste URL file (Drive/S3/dll)"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="border rounded-lg p-2 w-full"
-              />
-            )}
-
-            {(policy === "FILE_ONLY" ||
-              (policy === "URL_OR_FILE" && mode === "FILE")) && (
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-                <p className="text-xs text-gray-500">Max size: {maxMb}MB</p>
-              </div>
-            )}
-
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-            {success && <div className="text-green-700 text-sm">{success}</div>}
-
-            <button
-              onClick={onSubmit}
-              disabled={submitting || isLate}
-              className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
-            >
-              {submitting ? "Submitting..." : "Submit"}
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      </Card>
     </div>
   );
 }
-export default StudentAssignmentDetailPage;

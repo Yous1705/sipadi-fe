@@ -1,6 +1,5 @@
 "use client";
 
-import StudentNavbar from "@/components/student-navbar";
 import {
   getAttendanceSessionDetail,
   selfAttend,
@@ -10,9 +9,19 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Select } from "@/components/ui/select";
+
 type Status = "HADIR" | "IZIN" | "SAKIT" | "ALPHA";
 
-function StudentAttendanceSessionPage() {
+function pickErr(e: any) {
+  return e?.message ?? e?.error ?? "Terjadi kesalahan";
+}
+
+export default function StudentAttendanceSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const sid = Number(sessionId);
   const router = useRouter();
@@ -27,33 +36,57 @@ function StudentAttendanceSessionPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
+  async function load() {
     if (!sid) return;
     setLoading(true);
     setError(null);
 
-    getAttendanceSessionDetail(sid)
-      .then(setData)
-      .catch((e: any) =>
-        setError(e?.message ?? e?.error ?? "Gagal memuat session")
-      )
-      .finally(() => setLoading(false));
+    try {
+      const d = await getAttendanceSessionDetail(sid);
+      setData(d);
+    } catch (e) {
+      setError(pickErr(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sid]);
 
   const backHref = useMemo(() => {
-    if (data?.classId) return `/student/classes/${data.classId}`;
-    return "/student";
-  }, [data?.classId]);
+    // paling konsisten: balik ke all attendance
+    return "/student/attendance";
+  }, []);
+
+  if (loading) return <div className="text-sm text-slate-500">Loading...</div>;
+
+  if (!data) {
+    return (
+      <Card title="Not found" description="Session not found">
+        <Link
+          href={backHref}
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Back
+        </Link>
+      </Card>
+    );
+  }
+
+  const openText = new Date(data.openAt).toLocaleString();
+  const closeText = data.closeAt
+    ? new Date(data.closeAt).toLocaleString()
+    : "-";
 
   async function onAttend() {
-    if (!data) return;
-
     setError(null);
     setSuccess(null);
 
-    // Kalau BE kamu mewajibkan note untuk IZIN/SAKIT, enforce di FE
     if ((status === "IZIN" || status === "SAKIT") && !note.trim()) {
-      setError("Note wajib diisi untuk IZIN/SAKIT");
+      setError(`Note wajib diisi untuk ${status}`);
       return;
     }
 
@@ -67,120 +100,115 @@ function StudentAttendanceSessionPage() {
 
       setSuccess("Absen berhasil ✅");
       setNote("");
+      await load();
       router.refresh();
-    } catch (e: any) {
-      setError(e?.message ?? e?.error ?? "Gagal absen");
+    } catch (e) {
+      setError(pickErr(e));
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (loading) {
-    return (
-      <div>
-        <StudentNavbar />
-        <div className="max-w-3xl mx-auto p-6">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div>
-        <StudentNavbar />
-        <div className="max-w-3xl mx-auto p-6">Session not found</div>
-      </div>
-    );
-  }
-
-  const openText = new Date(data.openAt).toLocaleString();
-  const closeText = data.closeAt
-    ? new Date(data.closeAt).toLocaleString()
-    : "-";
-
   return (
-    <div>
-      <StudentNavbar />
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">
-              {data.name ?? `Session #${data.id}`}
-            </h1>
-            <p className="text-gray-600">
-              {data.subjectName} • {data.teacherName}
-            </p>
-            <p className="text-sm mt-1">Open: {openText}</p>
-            <p className="text-sm">Close: {closeText}</p>
-            <p className="text-sm mt-1">
-              Status:{" "}
-              <span
-                className={data.isActive ? "text-green-700" : "text-gray-600"}
-              >
-                {data.isActive ? "ACTIVE" : "CLOSED"}
-              </span>
-            </p>
-          </div>
-
-          <Link href={backHref} className="text-sm underline">
-            Back
+    <div className="space-y-4">
+      <PageHeader
+        title={data.name ?? `Session #${data.id}`}
+        subtitle={`${data.subjectName} • ${data.teacherName}`}
+        right={
+          <Link href={backHref}>
+            <Button>Back</Button>
           </Link>
+        }
+      />
+
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
+          {error}
         </div>
+      ) : null}
 
-        <div className="border rounded-xl p-4 space-y-3">
-          <div className="font-semibold">Self Attendance</div>
+      {success ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 p-3 text-sm">
+          {success}
+        </div>
+      ) : null}
 
-          {!data.isActive ? (
-            <div className="text-sm text-gray-600">
-              Session sudah ditutup, tidak bisa absen.
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {(["HADIR", "IZIN", "SAKIT", "ALPHA"] as Status[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatus(s)}
-                    className={`px-3 py-2 rounded-lg border text-sm ${
-                      status === s ? "bg-black text-white" : ""
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+      <Card
+        title="Session info"
+        description={`Open: ${openText} • Close: ${closeText}`}
+        action={
+          <span
+            className={`text-xs px-2.5 py-1 rounded-full border ${
+              data.isActive
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-slate-50 text-slate-700 border-slate-200"
+            }`}
+          >
+            {data.isActive ? "ACTIVE" : "CLOSED"}
+          </span>
+        }
+      >
+        <div className="text-sm text-slate-600">
+          Jika sesi sudah ditutup, kamu tidak bisa mengisi attendance.
+        </div>
+      </Card>
 
-              {(status === "IZIN" || status === "SAKIT") && (
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-700">
-                    Note (wajib untuk {status})
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="border rounded-lg p-2 w-full min-h-[90px]"
-                    placeholder="Contoh: sakit demam / izin acara keluarga..."
-                  />
-                </div>
-              )}
-
-              {error && <div className="text-red-600 text-sm">{error}</div>}
-              {success && (
-                <div className="text-green-700 text-sm">{success}</div>
-              )}
-
-              <button
-                onClick={onAttend}
-                disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
+      <Card
+        title="Self attendance"
+        description="Pilih status dan isi catatan jika diperlukan."
+      >
+        {!data.isActive ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-4 text-slate-600">
+            Session sudah ditutup, tidak bisa absen.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Field label="Status">
+              <Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as Status)}
               >
-                {submitting ? "Submitting..." : "Submit Attendance"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+                <option value="HADIR">HADIR</option>
+                <option value="IZIN">IZIN</option>
+                <option value="SAKIT">SAKIT</option>
+                <option value="ALPHA">ALPHA</option>
+              </Select>
+            </Field>
+
+            {status === "IZIN" || status === "SAKIT" ? (
+              <Field label={`Note (wajib untuk ${status})`}>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className={[
+                    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900",
+                    "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400",
+                    "min-h-[100px]",
+                  ].join(" ")}
+                  placeholder="Contoh: sakit demam / izin acara keluarga..."
+                />
+              </Field>
+            ) : (
+              <Field label="Note (optional)">
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className={[
+                    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900",
+                    "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400",
+                    "min-h-[100px]",
+                  ].join(" ")}
+                  placeholder="Catatan (optional)..."
+                />
+              </Field>
+            )}
+
+            <Button variant="primary" onClick={onAttend} disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Attendance"}
+            </Button>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
-export default StudentAttendanceSessionPage;

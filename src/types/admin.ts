@@ -1,3 +1,12 @@
+export type OptionUser = { id: number; name: string; email?: string };
+export type OptionClass = {
+  id: number;
+  name: string;
+  year: number;
+  isActive?: boolean;
+};
+export type OptionSubject = { id: number; name: string; isActive?: boolean };
+
 export type AdminDashboard = {
   generatedAt: string;
   counts: {
@@ -120,4 +129,67 @@ export type AttendanceRow = {
 export interface MoveStudentDto {
   studentId: number;
   classId: number;
+}
+
+export interface CreateStudentDto {
+  name: string;
+  email: string;
+  password: string;
+  classId: number;
+}
+
+export interface CreateTeacherDto {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface ResetPasswordDto {
+  newPassword: string;
+}
+
+export interface ChangeUserRoleDto {
+  role: UserRow["role"];
+}
+
+export interface CreateClassDto {
+  name: string;
+  year: number;
+}
+
+export interface UpdateClassDto {
+  name?: string;
+  year?: number;
+  isActive?: boolean;
+}
+
+export interface AssignHomeroomTeacherDto {
+  classId: number;
+  teacherId: number;
+}
+
+export interface MoveStudentDto {
+  studentId: number;
+  classId: number;
+}
+
+export interface AssignTeacherDto {
+  teacherId: number;
+  classId: number;
+  subjectId: number;
+}
+
+export interface CreateSubjectDto {
+  name: string;
+}
+
+export interface UpdateSubjectDto {
+  name: string;
+}
+
+export type AttendanceStatus = "HADIR" | "IZIN" | "SAKIT" | "ALPHA";
+
+export interface UpdateAttendanceDto {
+  status?: AttendanceStatus;
+  note?: string;
 }

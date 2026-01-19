@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { CreateAssignmentDto, SubmissionPolicy } from "@/types/teacher";
 import { createAssignment } from "@/services/teacher/teacher.service";
-import TeacherNavbar from "@/components/teacher-navbar";
+
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 function toLocalDateTimeInputValue(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -47,28 +53,36 @@ export default function CreateAssignmentPage() {
   const [error, setError] = useState<string | null>(null);
 
   if (!teachingAssigmentId) {
-    return <div className="p-6">Invalid teachingAssigmentId</div>;
+    return (
+      <Card
+        title="Invalid params"
+        description="teachingAssigmentId tidak valid."
+      >
+        <Link
+          href="/teacher"
+          className="text-sm text-slate-600 hover:underline"
+        >
+          ← Kembali
+        </Link>
+      </Card>
+    );
   }
+
+  const fileEnabled = submissionPolicy !== "URL_ONLY";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!title.trim()) {
-      setError("Judul wajib diisi");
-      return;
-    }
-    if (!dueDateLocal) {
-      setError("Due date wajib diisi");
-      return;
-    }
+    if (!title.trim()) return setError("Judul wajib diisi");
+    if (!dueDateLocal) return setError("Due date wajib diisi");
+
     if (
       (submissionPolicy === "FILE_ONLY" ||
         submissionPolicy === "URL_OR_FILE") &&
       maxFileSizeMb <= 0
     ) {
-      setError("Max file size harus lebih dari 0");
-      return;
+      return setError("Max file size harus lebih dari 0");
     }
 
     const payload: CreateAssignmentDto = {
@@ -84,158 +98,138 @@ export default function CreateAssignmentPage() {
     try {
       setLoading(true);
       await createAssignment(payload);
-
-      // balik ke list assignments
       router.push(`/teacher/teaching/${teachingAssigmentId}/assignments`);
       router.refresh();
     } catch (e: any) {
-      const msg = e?.message ?? e?.error ?? "Gagal membuat assignment";
-      setError(msg);
+      setError(e?.message ?? e?.error ?? "Gagal membuat assignment");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <TeacherNavbar />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Create Assignment</h1>
-          <p className="text-sm text-gray-500">
-            Teaching ID: {teachingAssigmentId}
-          </p>
-        </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Create Assignment"
+        subtitle={`Teaching #${teachingAssigmentId}`}
+        right={
+          <Link href={`/teacher/teaching/${teachingAssigmentId}/assignments`}>
+            <Button>Back</Button>
+          </Link>
+        }
+      />
 
-        <Link
-          href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
-          className="text-sm text-gray-600 hover:underline"
-        >
-          ← Back
-        </Link>
-      </div>
-
-      {error && (
-        <div className="border border-red-200 bg-red-50 text-red-700 rounded p-4">
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 p-3 text-sm">
           {error}
         </div>
-      )}
+      ) : null}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="border rounded-lg p-4 space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-              placeholder="Contoh: Tugas 1 - Essay"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Description (optional)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded px-3 py-2 min-h-[100px]"
-              placeholder="Instruksi tugas..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Due date</label>
-            <input
-              type="datetime-local"
-              value={dueDateLocal}
-              onChange={(e) => setDueDateLocal(e.target.value)}
-              className="border rounded px-3 py-2"
-            />
-            <div className="text-xs text-gray-500 mt-1">
-              Disimpan ke server dalam format ISO (UTC).
-            </div>
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Submission policy
-            </label>
-            <select
-              value={submissionPolicy}
-              onChange={(e) =>
-                setSubmissionPolicy(e.target.value as SubmissionPolicy)
-              }
-              className="border rounded px-3 py-2"
-            >
-              <option value="URL_ONLY">URL only</option>
-              <option value="FILE_ONLY">File only</option>
-              <option value="URL_OR_FILE">URL or File</option>
-            </select>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Max file size (MB)
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={maxFileSizeMb}
-                onChange={(e) => setMaxFileSizeMb(Number(e.target.value))}
-                className="w-full border rounded px-3 py-2"
-                disabled={submissionPolicy === "URL_ONLY"}
+        <Card
+          title="Details"
+          description="Basic information for this assignment."
+        >
+          <div className="space-y-4">
+            <Field label="Title" hint="Contoh: Tugas 1 - Essay">
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Masukkan judul tugas"
               />
-              {submissionPolicy === "URL_ONLY" && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Tidak dipakai karena policy URL only.
-                </div>
-              )}
+            </Field>
+
+            <Field
+              label="Description (optional)"
+              hint="Instruksi, format jawaban, atau rubric."
+            >
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={[
+                  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900",
+                  "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400",
+                  "min-h-[120px]",
+                ].join(" ")}
+                placeholder="Instruksi tugas..."
+              />
+            </Field>
+
+            <Field
+              label="Due date"
+              hint="Disimpan ke server dalam format ISO (UTC)."
+            >
+              <Input
+                type="datetime-local"
+                value={dueDateLocal}
+                onChange={(e) => setDueDateLocal(e.target.value)}
+              />
+            </Field>
+          </div>
+        </Card>
+
+        <Card
+          title="Submission settings"
+          description="How students submit their work."
+        >
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Submission policy">
+                <Select
+                  value={submissionPolicy}
+                  onChange={(e) =>
+                    setSubmissionPolicy(e.target.value as SubmissionPolicy)
+                  }
+                >
+                  <option value="URL_ONLY">URL only</option>
+                  <option value="FILE_ONLY">File only</option>
+                  <option value="URL_OR_FILE">URL or File</option>
+                </Select>
+              </Field>
+
+              <Field
+                label="Max file size (MB)"
+                hint={
+                  !fileEnabled
+                    ? "Tidak dipakai karena policy URL only."
+                    : undefined
+                }
+              >
+                <Input
+                  type="number"
+                  min={1}
+                  value={maxFileSizeMb}
+                  onChange={(e) => setMaxFileSizeMb(Number(e.target.value))}
+                  disabled={!fileEnabled}
+                />
+              </Field>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Allowed MIME (optional)
-              </label>
-              <input
+            <Field
+              label="Allowed MIME (optional)"
+              hint={
+                !fileEnabled
+                  ? "Tidak dipakai karena policy URL only."
+                  : 'Contoh: "application/pdf,image/png"'
+              }
+            >
+              <Input
                 value={allowedMime}
                 onChange={(e) => setAllowedMime(e.target.value)}
-                className="w-full border rounded px-3 py-2"
                 placeholder='Contoh: "application/pdf,image/png"'
-                disabled={submissionPolicy === "URL_ONLY"}
+                disabled={!fileEnabled}
               />
-              {submissionPolicy === "URL_ONLY" && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Tidak dipakai karena policy URL only.
-                </div>
-              )}
-            </div>
+            </Field>
           </div>
+        </Card>
 
-          <div className="text-xs text-gray-500">
-            Tips: kalau kamu belum enforce allowedMime di BE, field ini boleh
-            dikosongkan.
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="border rounded px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-          >
+        <div className="flex items-center gap-2">
+          <Button type="submit" variant="primary" disabled={loading}>
             {loading ? "Saving..." : "Create"}
-          </button>
+          </Button>
 
-          <Link
-            href={`/teacher/teaching/${teachingAssigmentId}/assignments`}
-            className="border rounded px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            Cancel
+          <Link href={`/teacher/teaching/${teachingAssigmentId}/assignments`}>
+            <Button type="button">Cancel</Button>
           </Link>
         </div>
       </form>
