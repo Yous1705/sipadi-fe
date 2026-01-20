@@ -59,12 +59,6 @@ export function Grid({ data }: { data: AdminDashboard }) {
         value={c.submissions.pendingGrading}
         hint="Pending grading"
       />
-
-      <KpiCard
-        label="Health"
-        value={c.users.total > 0 ? "OK" : "-"}
-        hint="Quick overview"
-      />
     </div>
   );
 }

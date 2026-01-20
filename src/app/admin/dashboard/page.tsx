@@ -15,11 +15,6 @@ function AdminDashboardPage() {
       <PageHeader
         title="Dashboard"
         subtitle="Overview of SIPADI system status."
-        right={
-          <Button variant="ghost" onClick={dashboard.refresh}>
-            Refresh
-          </Button>
-        }
       />
 
       {dashboard.err ? (

@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getHomeroomClass } from "@/services/teacher/teacher.service";
 import type { HomeroomClassResponse } from "@/types/teacher";
+import { token } from "@/lib/token";
 
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
@@ -39,6 +40,7 @@ function NavLink({
 
 export default function TeacherNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [homeroom, setHomeroom] = useState<HomeroomClassResponse | null>(null);
 
@@ -47,6 +49,12 @@ export default function TeacherNavbar() {
       .then((d) => setHomeroom(d))
       .catch(() => setHomeroom(null));
   }, []);
+
+  function handleLogout() {
+    token.clear();
+    router.push("../auth/login");
+    router.refresh();
+  }
 
   const DASHBOARD_HREF = "/teacher/dashboard";
 
@@ -75,14 +83,12 @@ export default function TeacherNavbar() {
                 }
               />
 
-              {/* Teachings list ada di dashboard kamu, jadi link-nya ke dashboard */}
               <NavLink
                 href={DASHBOARD_HREF}
                 label="Teachings"
                 activeWhen={(p) => p.startsWith("/teacher/teaching")}
               />
 
-              {/* Homeroom hanya muncul kalau user punya homeroom */}
               {homeroomHref ? (
                 <NavLink
                   href={homeroomHref}
@@ -93,8 +99,20 @@ export default function TeacherNavbar() {
             </nav>
           </div>
 
-          <div className="text-xs text-slate-500 hidden sm:block">
-            {pathname.startsWith("/teacher/teaching") ? "Teaching" : "Teacher"}
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-slate-500 hidden sm:block">
+              {pathname.startsWith("/teacher/teaching")
+                ? "Teaching"
+                : "Teacher"}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="text-sm font-medium text-slate-600 hover:text-red-600
+                         px-3 py-1.5 rounded-md hover:bg-red-50 transition"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>

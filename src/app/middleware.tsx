@@ -29,6 +29,13 @@ function middleware(req: NextRequest) {
 
   const isAllowed = allowedPaths.some((path) => pathname.startsWith(path));
 
+  const now = Date.now();
+  if (typeof payload.exp === "number" && payload.exp * 1000 <= now) {
+    const res = NextResponse.redirect(new URL("/login", req.url));
+    res.cookies.set("sipadi_token", "", { path: "/", maxAge: 0 });
+    return res;
+  }
+
   if (!isAllowed) {
     return NextResponse.redirect(
       new URL(`/${payload.role.toLowerCase()}/`, req.url),

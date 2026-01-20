@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { token } from "@/lib/token";
 
 function cx(...c: Array<string | false | null | undefined>) {
   return c.filter(Boolean).join(" ");
@@ -36,6 +37,14 @@ function NavItem({
 }
 
 export default function StudentNavbar() {
+  const router = useRouter();
+
+  function handleLogout() {
+    token.clear();
+    router.push("auth/login");
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b bg-white">
       <div className="max-w-6xl mx-auto px-4">
@@ -67,7 +76,19 @@ export default function StudentNavbar() {
             </nav>
           </div>
 
-          <div className="text-xs text-slate-500 hidden sm:block">Student</div>
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-slate-500 hidden sm:block">
+              Student
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="text-sm font-medium text-slate-600 hover:text-red-600
+                         px-3 py-1.5 rounded-md hover:bg-red-50 transition"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </header>

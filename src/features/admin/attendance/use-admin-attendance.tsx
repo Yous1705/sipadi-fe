@@ -21,7 +21,7 @@ export function useAdminAttendances() {
   const [classId, setClassId] = useState<number>(0);
   const [subjectId, setSubjectId] = useState<number>(0);
   const [teacherId, setTeacherId] = useState<number>(0);
-  const [status, setStatus] = useState<string>(""); // "" | HADIR | IZIN | SAKIT | ALPHA
+  const [status, setStatus] = useState<string>("");
 
   const [q, setQ] = useState("");
 

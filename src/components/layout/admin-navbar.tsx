@@ -1,10 +1,20 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { NavLink } from "@/components/layout/nav-link";
+import { token } from "@/lib/token";
 
 export default function AdminNavbar() {
+  const router = useRouter();
+
+  function handleLogout() {
+    token.clear();
+    router.push("../auth/login");
+    router.refresh();
+  }
+
   return (
     <div className="bg-slate-50">
       <Topbar
@@ -15,6 +25,15 @@ export default function AdminNavbar() {
               Manage users, classes, subjects, and reports
             </span>
           </div>
+        }
+        right={
+          <button
+            onClick={handleLogout}
+            className="text-sm font-medium text-slate-600 hover:text-red-600
+                       px-3 py-1.5 rounded-xl hover:bg-red-50 transition"
+          >
+            Logout
+          </button>
         }
       />
 
