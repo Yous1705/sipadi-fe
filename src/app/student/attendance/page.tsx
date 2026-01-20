@@ -43,7 +43,7 @@ function StatusBadge({
   );
 }
 
-export default function AllAttendancePage() {
+function AllAttendancePage() {
   const [tab, setTab] = useState<Tab>("ACTIVE");
   const [q, setQ] = useState("");
 
@@ -236,3 +236,5 @@ export default function AllAttendancePage() {
     </div>
   );
 }
+
+export default AllAttendancePage;

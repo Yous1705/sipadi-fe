@@ -15,7 +15,7 @@ import { SubjectSummary } from "@/features/student/subject-summary";
 import { SubjectAssignments } from "@/features/student/subject-assignments";
 import { SubjectAttendance } from "@/features/student/subject-attendance";
 
-export default function SubjectPage() {
+function SubjectPage() {
   const { teachingAssigmentId } = useParams<{ teachingAssigmentId: string }>();
   const tid = Number(teachingAssigmentId);
 
@@ -60,3 +60,5 @@ export default function SubjectPage() {
     </div>
   );
 }
+
+export default SubjectPage;

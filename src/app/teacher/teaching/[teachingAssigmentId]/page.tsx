@@ -28,7 +28,7 @@ function HubCard({
   );
 }
 
-export default function TeachingHubPage() {
+function TeachingPage() {
   const params = useParams();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
 
@@ -69,3 +69,5 @@ export default function TeachingHubPage() {
     </div>
   );
 }
+
+export default TeachingPage;

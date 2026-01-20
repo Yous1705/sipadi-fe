@@ -30,7 +30,6 @@ export function SubmissionForm({
   const due = new Date(data.dueDate);
   const isLate = Date.now() > due.getTime();
 
-  // default kind berdasarkan policy
   const initialKind: SubmissionKind = useMemo(() => {
     if (policy === "URL_ONLY") return "URL";
     if (policy === "FILE_ONLY") return "FILE";
@@ -48,9 +47,7 @@ export function SubmissionForm({
   const allowUrl = policy === "URL_ONLY" || policy === "URL_OR_FILE";
   const allowFile = policy === "FILE_ONLY" || policy === "URL_OR_FILE";
 
-  // 🔥 FIX: kalau data.submission berubah setelah load(), form ikut update
   useEffect(() => {
-    // update mode
     const nextKind: SubmissionKind =
       policy === "URL_ONLY"
         ? "URL"
@@ -76,7 +73,6 @@ export function SubmissionForm({
     try {
       setLoading(true);
 
-      // URL submit
       if (
         policy === "URL_ONLY" ||
         (policy === "URL_OR_FILE" && kind === "URL")
@@ -87,11 +83,10 @@ export function SubmissionForm({
           return;
         }
         await submitAssignmentUrl(data.id, u);
-        await onSubmitted(); // reload page data
+        await onSubmitted();
         return;
       }
 
-      // FILE submit
       if (
         policy === "FILE_ONLY" ||
         (policy === "URL_OR_FILE" && kind === "FILE")
@@ -110,7 +105,7 @@ export function SubmissionForm({
         }
 
         await submitAssignmentFile(data.id, file);
-        await onSubmitted(); // reload page data
+        await onSubmitted();
         setFile(null);
         return;
       }

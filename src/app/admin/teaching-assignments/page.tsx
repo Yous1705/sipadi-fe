@@ -7,7 +7,7 @@ import { TeachingAssign } from "@/features/admin/teaching/teaching-assign";
 import { TeachingTable } from "@/features/admin/teaching/teaching-table";
 import { TeachingDetailPanel } from "@/features/admin/teaching/teaching-detail-panel";
 
-export default function AdminTeachingPage() {
+function AdminTeachingPage() {
   const t = useAdminTeaching();
 
   return (
@@ -64,3 +64,5 @@ export default function AdminTeachingPage() {
     </div>
   );
 }
+
+export default AdminTeachingPage;

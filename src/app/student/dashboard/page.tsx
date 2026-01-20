@@ -79,7 +79,7 @@ function StatCard({
   );
 }
 
-export default function StudentDashboardPage() {
+function StudentDashboardPage() {
   const [dash, setDash] = useState<StudentDashboardResponse | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
@@ -258,3 +258,5 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
+
+export default StudentDashboardPage;

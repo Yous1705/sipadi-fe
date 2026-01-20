@@ -7,7 +7,7 @@ import { CreateSubjects } from "@/features/admin/subjects/create-subjects";
 import { SubjectsTable } from "@/features/admin/subjects/subjects-table";
 import { EditSubjects } from "@/features/admin/subjects/edit-subjects";
 
-export default function AdminSubjectsPage() {
+function AdminSubjectsPage() {
   const s = useAdminSubjects();
 
   useEffect(() => {
@@ -62,3 +62,5 @@ export default function AdminSubjectsPage() {
     </div>
   );
 }
+
+export default AdminSubjectsPage;

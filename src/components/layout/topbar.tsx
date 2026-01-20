@@ -22,7 +22,9 @@ export function Topbar({
             <div className="text-sm font-semibold text-slate-900">
               {title ?? "SIPADI"}
             </div>
-            <div className="text-xs text-slate-500">Blue & White UI</div>
+            <div className="text-xs text-slate-500">
+              Sistem Pendidikan Digital
+            </div>
           </div>
           {left ? <div className="ml-4">{left}</div> : null}
         </div>

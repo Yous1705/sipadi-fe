@@ -19,7 +19,7 @@ function pickErr(e: any) {
   return Array.isArray(msg) ? msg.join(", ") : msg;
 }
 
-export default function HomeroomReportPage() {
+function HomeroomReportPage() {
   const params = useParams();
   const classId = Number(params.classId);
 
@@ -252,3 +252,5 @@ export default function HomeroomReportPage() {
     </div>
   );
 }
+
+export default HomeroomReportPage;

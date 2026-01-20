@@ -21,24 +21,20 @@ export function useAdminClasses() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // filters
   const [q, setQ] = useState("");
   const [activeOnly, setActiveOnly] = useState(false);
 
-  // create
   const [createName, setCreateName] = useState("");
   const [createYear, setCreateYear] = useState<number>(
     new Date().getFullYear(),
   );
 
-  // selection
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const selectedClass = useMemo(
     () => rows.find((c) => c.id === selectedClassId) ?? null,
     [rows, selectedClassId],
   );
 
-  // students
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentsErr, setStudentsErr] = useState<string | null>(null);
   const [students, setStudents] = useState<UserRow[]>([]);
@@ -47,7 +43,6 @@ export function useAdminClasses() {
     [students],
   );
 
-  // edit
   const [editingId, setEditingId] = useState<number | null>(null);
   const editingRow = useMemo(
     () => rows.find((c) => c.id === editingId) ?? null,
@@ -58,10 +53,8 @@ export function useAdminClasses() {
   const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
   const [editActive, setEditActive] = useState(true);
 
-  // homeroom
   const [selectedTeacherId, setSelectedTeacherId] = useState<number>(0);
 
-  // move student
   const [moveMap, setMoveMap] = useState<Record<number, number>>({});
 
   const activeClasses = useMemo(
@@ -88,24 +81,20 @@ export function useAdminClasses() {
       const list = (cls ?? []) as unknown as ClassRow[];
       setRows(list);
 
-      // auto-select
       setSelectedClassId((prev) => prev ?? list?.[0]?.id ?? null);
     } catch (e: any) {
       setErr(e?.message ?? "Failed to load classes");
       setRows([]);
     } finally {
-      // ✅ loading ALWAYS ends even if teachers request later ngadat
       setLoading(false);
     }
   }
 
   async function refreshTeachersSoft() {
-    // Tidak mempengaruhi loading classes
     try {
       const tch = await adminListUsers({ role: "TEACHER", isActive: true });
       setTeachers((tch ?? []) as unknown as UserRow[]);
     } catch {
-      // boleh gagal tanpa ganggu classes
       setTeachers([]);
     }
   }
@@ -137,7 +126,6 @@ export function useAdminClasses() {
   useEffect(() => {
     refreshClassesOnly();
     refreshTeachersSoft();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -147,7 +135,6 @@ export function useAdminClasses() {
       return;
     }
     refreshStudents(selectedClassId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClassId]);
 
   function startEdit(row: ClassRow) {
@@ -210,7 +197,6 @@ export function useAdminClasses() {
     }
     setErr(null);
     try {
-      // ✅ sesuai admin.service.ts terbaru: DTO
       await adminAssignHomeroomTeacher({
         classId: selectedClassId,
         teacherId: selectedTeacherId,
@@ -232,7 +218,6 @@ export function useAdminClasses() {
 
     setStudentsErr(null);
     try {
-      // ✅ sesuai admin.service.ts terbaru: DTO
       await adminMoveStudent({ studentId, classId: toClassId });
       await refreshStudents(selectedClassId);
       await refreshClassesOnly();
@@ -255,32 +240,27 @@ export function useAdminClasses() {
   }
 
   return {
-    // data
     rows,
     teachers,
     loading,
     err,
 
-    // filters
     q,
     setQ,
     activeOnly,
     setActiveOnly,
     filteredRows,
 
-    // selection
     selectedClassId,
     setSelectedClassId,
     selectedClass,
 
-    // create
     createName,
     setCreateName,
     createYear,
     setCreateYear,
     createClass,
 
-    // edit
     editingRow,
     editName,
     setEditName,
@@ -293,24 +273,20 @@ export function useAdminClasses() {
     updateClass,
     deleteClass,
 
-    // students
     studentsLoading,
     studentsErr,
     studentsOnly,
 
-    // homeroom
     selectedTeacherId,
     setSelectedTeacherId,
     assignHomeroomTeacher,
 
-    // move/remove
     moveMap,
     setMoveMap,
     activeClasses,
     moveStudent,
     removeStudent,
 
-    // manual refresh
     refreshClassesOnly,
   };
 }

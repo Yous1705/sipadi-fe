@@ -34,7 +34,7 @@ function TeachingCard({ t }: { t: TeachingItem }) {
   );
 }
 
-export default function TeacherHomePage() {
+function TeacherHomePage() {
   const [teachings, setTeachings] = useState<TeachingItem[]>([]);
   const [loadingTeachings, setLoadingTeachings] = useState(true);
   const [teachingsError, setTeachingsError] = useState<string | null>(null);
@@ -136,3 +136,5 @@ export default function TeacherHomePage() {
     </div>
   );
 }
+
+export default TeacherHomePage;

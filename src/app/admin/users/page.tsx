@@ -9,7 +9,7 @@ import { UsersFilters } from "@/features/admin/users/users-filters";
 import { UsersTable } from "@/features/admin/users/ussers-table";
 import { ResetPassword } from "@/features/admin/users/reset-password";
 
-export default function AdminUsersPage() {
+function AdminUsersPage() {
   const u = useAdminUsers();
 
   return (
@@ -82,3 +82,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+export default AdminUsersPage;

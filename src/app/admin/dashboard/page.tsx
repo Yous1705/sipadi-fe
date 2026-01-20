@@ -7,8 +7,8 @@ import { useAdminDashboard } from "@/features/admin/dashboard/use-admin-dashboar
 import { Grid } from "@/features/admin/dashboard/grid";
 import { Highlights } from "@/features/admin/dashboard/highlights";
 
-export default function AdminDashboardPage() {
-  const d = useAdminDashboard();
+function AdminDashboardPage() {
+  const dashboard = useAdminDashboard();
 
   return (
     <div className="space-y-6">
@@ -16,24 +16,24 @@ export default function AdminDashboardPage() {
         title="Dashboard"
         subtitle="Overview of SIPADI system status."
         right={
-          <Button variant="ghost" onClick={d.refresh}>
+          <Button variant="ghost" onClick={dashboard.refresh}>
             Refresh
           </Button>
         }
       />
 
-      {d.err ? (
+      {dashboard.err ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {d.err}
+          {dashboard.err}
         </div>
       ) : null}
 
-      {d.loading ? (
+      {dashboard.loading ? (
         <div className="text-sm text-slate-500">Loading dashboard...</div>
-      ) : d.data ? (
+      ) : dashboard.data ? (
         <>
-          <Grid data={d.data} />
-          <Highlights data={d.data} />
+          <Grid data={dashboard.data} />
+          <Highlights data={dashboard.data} />
         </>
       ) : (
         <div className="text-sm text-slate-500">No data.</div>
@@ -41,3 +41,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+export default AdminDashboardPage;

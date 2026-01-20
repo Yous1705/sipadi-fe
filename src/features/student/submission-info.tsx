@@ -37,9 +37,6 @@ export function SubmissionInfo({ data }: { data: StudentAssignmentDetail }) {
     try {
       setDownloading(true);
 
-      // Download via fetch → bikin Blob → download()
-      // NOTE: ini TANPA Authorization header. Kalau file endpoint kamu butuh auth,
-      // nanti kita bisa upgrade pakai token header (tapi banyak kasus file public sudah cukup).
       const res = await fetch(fileHref);
       if (!res.ok) {
         throw new Error(`Download failed (${res.status})`);
@@ -80,7 +77,6 @@ export function SubmissionInfo({ data }: { data: StudentAssignmentDetail }) {
         </div>
       </div>
 
-      {/* URL submission */}
       {sub.kind === "URL" && urlHref ? (
         <div className="text-sm text-slate-700">
           URL:{" "}
@@ -95,7 +91,6 @@ export function SubmissionInfo({ data }: { data: StudentAssignmentDetail }) {
         </div>
       ) : null}
 
-      {/* FILE submission */}
       {sub.kind === "FILE" ? (
         <div className="space-y-2">
           <div className="text-sm text-slate-700">
@@ -135,7 +130,6 @@ export function SubmissionInfo({ data }: { data: StudentAssignmentDetail }) {
         </div>
       ) : null}
 
-      {/* Feedback */}
       {sub.feedback ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
           <div className="font-medium text-slate-900 mb-1">Feedback</div>

@@ -20,7 +20,6 @@ function pickErr(e: any) {
 function progressPercent(progress?: string | number | null) {
   if (progress === null || progress === undefined) return 0;
 
-  // kalau number langsung pakai
   if (typeof progress === "number") {
     const n = Number.isFinite(progress) ? progress : 0;
     return Math.max(0, Math.min(100, n));
@@ -40,7 +39,7 @@ function progressPercent(progress?: string | number | null) {
   return Math.max(0, Math.min(100, n));
 }
 
-export default function TeacherAttendanceSessionsPage() {
+function TeacherAttendanceSessionsPage() {
   const params = useParams();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
 
@@ -196,3 +195,5 @@ export default function TeacherAttendanceSessionsPage() {
     </div>
   );
 }
+
+export default TeacherAttendanceSessionsPage;

@@ -34,7 +34,7 @@ type RowDraft = {
   error?: string | null;
 };
 
-export default function AttendanceSessionDetailPage() {
+function AttendanceSessionDetailPage() {
   const params = useParams();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
   const sessionId = Number(params.sessionId);
@@ -466,3 +466,5 @@ export default function AttendanceSessionDetailPage() {
     </div>
   );
 }
+
+export default AttendanceSessionDetailPage;

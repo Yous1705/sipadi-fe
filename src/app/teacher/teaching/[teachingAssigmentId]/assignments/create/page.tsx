@@ -28,7 +28,7 @@ function localInputToIso(value: string) {
   return d.toISOString();
 }
 
-export default function CreateAssignmentPage() {
+function CreateAssignmentPage() {
   const params = useParams();
   const router = useRouter();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
@@ -236,3 +236,5 @@ export default function CreateAssignmentPage() {
     </div>
   );
 }
+
+export default CreateAssignmentPage;

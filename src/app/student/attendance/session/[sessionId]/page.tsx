@@ -21,7 +21,7 @@ function pickErr(e: any) {
   return e?.message ?? e?.error ?? "Terjadi kesalahan";
 }
 
-export default function StudentAttendanceSessionPage() {
+function StudentAttendanceSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const sid = Number(sessionId);
   const router = useRouter();
@@ -212,3 +212,5 @@ export default function StudentAttendanceSessionPage() {
     </div>
   );
 }
+
+export default StudentAttendanceSessionPage;

@@ -27,7 +27,7 @@ function localInputToIso(value: string) {
   return d.toISOString();
 }
 
-export default function OpenAttendanceSessionPage() {
+function OpenAttendanceSessionPage() {
   const params = useParams();
   const router = useRouter();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
@@ -175,3 +175,4 @@ export default function OpenAttendanceSessionPage() {
     </div>
   );
 }
+export default OpenAttendanceSessionPage;

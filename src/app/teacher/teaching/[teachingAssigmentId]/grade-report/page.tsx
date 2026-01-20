@@ -18,7 +18,7 @@ function pickErr(e: any) {
   return Array.isArray(msg) ? msg.join(", ") : msg;
 }
 
-export default function GradeReportPage() {
+function GradeReportPage() {
   const params = useParams();
   const teachingId = Number(params.teachingAssigmentId);
 
@@ -211,3 +211,5 @@ export default function GradeReportPage() {
     </div>
   );
 }
+
+export default GradeReportPage;

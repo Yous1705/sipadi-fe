@@ -20,18 +20,15 @@ export function useAdminTeaching() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // filters
   const [q, setQ] = useState("");
   const [teacherId, setTeacherId] = useState<number>(0);
   const [classId, setClassId] = useState<number>(0);
   const [subjectId, setSubjectId] = useState<number>(0);
 
-  // assign form
   const [cTeacherId, setCTeacherId] = useState<number>(0);
   const [cClassId, setCClassId] = useState<number>(0);
   const [cSubjectId, setCSubjectId] = useState<number>(0);
 
-  // selection
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selectedRow = useMemo(
     () => rows.find((r) => r.id === selectedId) ?? null,
@@ -68,19 +65,15 @@ export function useAdminTeaching() {
       setClasses(cRows);
       setSubjects(sRows);
 
-      // default assign selections
       setCTeacherId((prev) => prev || tRows?.[0]?.id || 0);
       setCClassId((prev) => prev || cRows?.[0]?.id || 0);
       setCSubjectId((prev) => prev || sRows?.[0]?.id || 0);
-    } catch {
-      // options boleh gagal tanpa bikin table stuck
-    }
+    } catch {}
   }
 
   useEffect(() => {
     refreshTeaching();
     refreshOptionsSoft();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredRows = useMemo(() => {
@@ -135,18 +128,15 @@ export function useAdminTeaching() {
   }
 
   return {
-    // data
     rows,
     filteredRows,
     loading,
     err,
 
-    // options
     teachers,
     classes,
     subjects,
 
-    // filters
     q,
     setQ,
     teacherId,
@@ -156,7 +146,6 @@ export function useAdminTeaching() {
     subjectId,
     setSubjectId,
 
-    // assign form
     cTeacherId,
     setCTeacherId,
     cClassId,
@@ -165,12 +154,10 @@ export function useAdminTeaching() {
     setCSubjectId,
     assignTeaching,
 
-    // selection
     selectedId,
     setSelectedId,
     selectedRow,
 
-    // actions
     refreshTeaching,
     unassignTeaching,
   };

@@ -29,7 +29,7 @@ function pickErr(e: any) {
   return e?.message ?? e?.error ?? "Terjadi kesalahan";
 }
 
-export default function TeacherAssignmentDetailPage() {
+function TeacherAssignmentDetailPage() {
   const params = useParams();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
   const assignmentId = Number(params.assignmentId);
@@ -312,3 +312,5 @@ export default function TeacherAssignmentDetailPage() {
     </div>
   );
 }
+
+export default TeacherAssignmentDetailPage;

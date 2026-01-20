@@ -13,7 +13,7 @@ import { AssignmentFilter } from "@/types/ui";
 import { AssignmentFilters } from "@/features/teacher/assignment/assignment-filters";
 import { AssignmentItem } from "@/features/teacher/assignment/assignment-item";
 
-export default function TeacherAssignmentsPage() {
+function TeacherAssignmentsPage() {
   const params = useParams();
   const teachingAssigmentId = Number(params.teachingAssigmentId);
 
@@ -136,3 +136,5 @@ export default function TeacherAssignmentsPage() {
     </div>
   );
 }
+
+export default TeacherAssignmentsPage;
