@@ -53,7 +53,7 @@ sipadi-fe/
 1. Clone the repository:
 
    ```
-   git clone <repository-url>
+   git clone https://github.com/Revou-FSSE-Jun25/crack-fe-Yous1705.git
    cd sipadi-fe
    ```
 
