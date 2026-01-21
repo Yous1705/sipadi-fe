@@ -41,7 +41,7 @@ export default function StudentNavbar() {
 
   function handleLogout() {
     token.clear();
-    router.push("auth/login");
+    router.push("../auth/login");
     router.refresh();
   }
 

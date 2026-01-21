@@ -11,7 +11,7 @@ export default function AdminNavbar() {
 
   function handleLogout() {
     token.clear();
-    router.push("../auth/login");
+    router.push("/auth/login");
     router.refresh();
   }
 
